@@ -1,0 +1,114 @@
+"""
+Program: Penyelesaian Sistem Persamaan Nonlinear
+Metode: Fixed Point (Jacobi, Gauss-Seidel), Newton-Raphson, dan Broyden
+Nama: Farhan Nasrullah
+NIM: 24060123120039
+"""
+
+import numpy as np
+
+# ===============================
+#  DEFINISI FUNGSI SISTEM
+# ===============================
+def f1(x, y):
+    return x**2 + y**2 - 13
+
+def f2(x, y):
+    return x**2 - y - 5
+
+# Fungsi g1B dan g2B (karena NIMx = 3)
+def g1B(x, y):
+    return np.sqrt(13 - y**2)
+
+def g2B(x, y):
+    return x**2 - 5
+
+# ===============================
+#  FIXED POINT ITERATION (Jacobi & Gauss-Seidel)
+# ===============================
+def fixed_point_jacobi(g1, g2, x0, y0, tol=1e-6, max_iter=1000):
+    x, y = x0, y0
+    for i in range(max_iter):
+        x_new = g1(x, y)
+        y_new = g2(x, y)
+        if np.isnan(x_new) or np.isnan(y_new):
+            break
+        if np.linalg.norm([x_new - x, y_new - y]) < tol:
+            return (x_new, y_new, i+1)
+        x, y = x_new, y_new
+    return (x, y, max_iter)
+
+def fixed_point_gauss_seidel(g1, g2, x0, y0, tol=1e-6, max_iter=1000):
+    x, y = x0, y0
+    for i in range(max_iter):
+        x_new = g1(x, y)
+        y_new = g2(x_new, y)
+        if np.isnan(x_new) or np.isnan(y_new):
+            break
+        if np.linalg.norm([x_new - x, y_new - y]) < tol:
+            return (x_new, y_new, i+1)
+        x, y = x_new, y_new
+    return (x, y, max_iter)
+
+# ===============================
+#  NEWTON-RAPHSON MULTIVARIATE
+# ===============================
+def newton_raphson(x0, y0, tol=1e-6, max_iter=100):
+    x, y = x0, y0
+    for i in range(max_iter):
+        F = np.array([f1(x, y), f2(x, y)])
+        J = np.array([
+            [2*x, 2*y],
+            [2*x, -1]
+        ])
+        delta = np.linalg.solve(J, -F)
+        x, y = x + delta[0], y + delta[1]
+        if np.linalg.norm(delta) < tol:
+            return (x, y, i+1)
+    return (x, y, max_iter)
+
+# ===============================
+#  BROYDEN (Secant Multivariata)
+# ===============================
+def broyden(x0, y0, tol=1e-6, max_iter=100):
+    x, y = x0, y0
+    X = np.array([x, y], dtype=float)
+    B = np.array([
+        [2*x, 2*y],
+        [2*x, -1]
+    ], dtype=float)
+    for i in range(max_iter):
+        F = np.array([f1(X[0], X[1]), f2(X[0], X[1])])
+        delta = np.linalg.solve(B, -F)
+        X_new = X + delta
+        F_new = np.array([f1(X_new[0], X_new[1]), f2(X_new[0], X_new[1])])
+        y_diff = F_new - F
+        B = B + np.outer((y_diff - B @ delta), delta) / np.dot(delta, delta)
+        if np.linalg.norm(delta) < tol:
+            return (X_new[0], X_new[1], i+1)
+        X = X_new
+    return (X[0], X[1], max_iter)
+
+# ===============================
+#  MAIN PROGRAM
+# ===============================
+if __name__ == "__main__":
+    x0, y0 = 1.5, 3.5
+    tol = 1e-6
+
+    print("=== Penyelesaian Sistem Nonlinear ===")
+    print(f"Persamaan:\n  f1(x,y) = x^2 + y^2 - 13 = 0\n  f2(x,y) = x^2 - y - 5 = 0\n")
+
+    xj, yj, ij = fixed_point_jacobi(g1B, g2B, x0, y0, tol)
+    print(f"Fixed Point (Jacobi): x = {xj:.9f}, y = {yj:.9f}, iter = {ij}")
+
+    xs, ys, isei = fixed_point_gauss_seidel(g1B, g2B, x0, y0, tol)
+    print(f"Fixed Point (Gauss-Seidel): x = {xs:.9f}, y = {ys:.9f}, iter = {isei}")
+
+    xn, yn, inewt = newton_raphson(x0, y0, tol)
+    print(f"Newton-Raphson: x = {xn:.9f}, y = {yn:.9f}, iter = {inewt}")
+
+    xb, yb, ibro = broyden(x0, y0, tol)
+    print(f"Broyden (Secant Multivariata): x = {xb:.9f}, y = {yb:.9f}, iter = {ibro}")
+
+    print("\nSolusi eksak mendekati: x = 2, y = 3")
