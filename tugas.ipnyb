@@ -2,7 +2,7 @@
 Program: Penyelesaian Sistem Persamaan Nonlinear
 Metode: Fixed Point (Jacobi, Gauss-Seidel), Newton-Raphson, dan Broyden
 Nama: Farhan Nasrullah
-NIM: 24060123120039
+NIM: 21120123120039
 """
 
 import numpy as np
